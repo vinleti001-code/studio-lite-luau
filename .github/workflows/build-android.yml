@@ -9,6 +9,7 @@ jobs:
   build-android:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         target: [template_debug, template_release]
         arch: [arm64, x86_64]
@@ -26,16 +27,14 @@ jobs:
       - name: Install SCons
         run: pip install scons
 
-      - name: Set up Android NDK
-        uses: nttld/setup-ndk@v1
-        id: setup-ndk
-        with:
-          ndk-version: r23c
+      - name: Show available NDK versions
+        run: ls "$ANDROID_HOME/ndk" || true
 
       - name: Build with SCons
         env:
-          ANDROID_NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
+          ANDROID_NDK_ROOT: ${{ env.ANDROID_NDK_LATEST_HOME }}
         run: |
+          echo "Using NDK at: $ANDROID_NDK_ROOT"
           scons platform=android target=${{ matrix.target }} arch=${{ matrix.arch }} -j$(nproc)
 
       - name: Upload .so artifact
